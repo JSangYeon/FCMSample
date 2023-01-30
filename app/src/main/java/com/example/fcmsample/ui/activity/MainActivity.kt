@@ -12,10 +12,14 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 
-    private val mainViewModel : MainViewModel by viewModels()
+    private val _mainViewModel : MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(logTag, "fcmSample")
+
+        binding.mainViewModel = _mainViewModel
+
+
     }
 }
