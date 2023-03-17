@@ -1,6 +1,5 @@
 package com.example.fcmsample.fcm
 
-import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,7 +16,6 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.example.fcmsample.R
 import com.example.fcmsample.ui.activity.SecondActivity
-import com.google.android.gms.common.internal.service.Common
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -123,17 +121,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 //        intent.putExtra("title", messageBody )
 //        intent.putExtra("body", messageBody )
 
-        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.getActivity(
-                this,
-                requestID,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-            )
-        } else {
-                PendingIntent.getActivity(this, requestID, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-        }
-
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0 /* Request code */, intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
 
         val channelId = "fcm_default_channel"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -142,18 +133,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             .setContentText("테스트")
             .setAutoCancel(true)
             .setSound(defaultSoundUri)
-//            .setContentIntent(pendingIntent)
+            .setContentIntent(pendingIntent)
             .setSmallIcon(R.drawable.ic_launcher_background)
-            .addAction(R.drawable.ic_launcher_background, "확인", pendingIntent)
-            .addAction(R.drawable.ic_launcher_background, "취소", getCancelPendingIntent())
+            .addAction(com.google.android.material.R.drawable.ic_mtrl_checked_circle, "확인", getCheckPendingIntent())
+            .addAction(com.google.android.material.R.drawable.ic_mtrl_chip_close_circle, "취소", getCancelPendingIntent())
 
 
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-
-        val pendingIntent2 =
-            PendingIntent.getActivity(this, requestID, Intent(), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
 
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -202,10 +190,43 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
 
-    private fun getCancelPendingIntent(): PendingIntent? {
+    private fun getCheckPendingIntent(): PendingIntent {
+        val broadcastIntentCancel = Intent(this, NotificationActionService::class.java)
+        broadcastIntentCancel.action = getString(R.string.action_check)
+        val pendingIntentCancel =if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.getForegroundService(
+                    this,
+                    1,
+                    broadcastIntentCancel,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                )
+            } else {
+                PendingIntent.getForegroundService(
+                    this,
+                    1,
+                    broadcastIntentCancel,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            }
+        } else {
+            PendingIntent.getService(
+                this,
+                1,
+                broadcastIntentCancel,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
+        return pendingIntentCancel
+    }
 
-        val broadcastIntentCancel = Intent(this, NotiActionService::class.java)
-        broadcastIntentCancel.action = "CANCEL_ACTION"
+
+
+    // 취소 버튼 눌렀을 때 PendingIntent
+    private fun getCancelPendingIntent(): PendingIntent {
+
+        val broadcastIntentCancel = Intent(this, NotificationActionService::class.java)
+        broadcastIntentCancel.action = getString(R.string.action_cancel)
         val pendingIntentCancel =if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 PendingIntent.getForegroundService(

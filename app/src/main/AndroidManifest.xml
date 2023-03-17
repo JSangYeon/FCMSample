@@ -42,16 +42,16 @@
             </intent-filter>
         </service>
 
+
         <service
-            android:name=".fcm.NotiActionService"
+            android:name=".fcm.NotificationActionService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="YES_ACTION" />
-                <action android:name="CANCEL_ACTION" />
+                <action android:name="ACTION_CHECK" />
+                <action android:name="ACTION_CANCEL" />
             </intent-filter>
         </service>
-
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
