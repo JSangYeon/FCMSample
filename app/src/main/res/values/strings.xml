@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">FCMSample</string>
     <string name="default_notification_channel_id">defaultNotificationChannelId</string>
+
+    <string name="check">확인</string>
+    <string name="app_permission_not_allowed_title">앱 필수 권한 거부</string>
+    <string name="app_permission_not_allowed_content">앱에 필요한 권한을 허용하지 않아 앱을 종료합니다.\n권한 허용 후 앱을 다시 실행해주세요.</string>
+
 </resources>

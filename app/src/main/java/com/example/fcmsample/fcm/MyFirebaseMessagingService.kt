@@ -1,5 +1,6 @@
 package com.example.fcmsample.fcm
 
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -16,11 +17,15 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.example.fcmsample.R
 import com.example.fcmsample.ui.activity.SecondActivity
+import com.google.android.gms.common.internal.service.Common
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
+
+
+    lateinit var notificationManager : NotificationManager
 
     // [START receive_message]
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -28,10 +33,31 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         Log.d(TAG, "From: ${remoteMessage.from}")
 
-//        // Check if message contains a data payload.
+        sendNotification() // 백그라운드인 경우 notification 이유는 모르겠지만 MainActivity로만 이동됨
+        // Check if message contains a notification payload.
+//        remoteMessage.data.let { data ->
+//
+//
+//            Log.d(TAG, "Message Notification Body: ${data}")
+//            sendNotification() // 백그라운드인 경우 notification 이유는 모르겠지만 MainActivity로만 이동됨
+//
+////            if (isAppRunning(this)) { //포그라운드
+////                val intent = Intent(
+////                    this,
+////                    SecondActivity::class.java
+////                ) // 전송될 Activity 지정 왜인지 백그라운드에선 Main으로만 감
+////                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // 이거여야지만 이동됨.. 이유는모름
+////                intent.putExtra("title", notification.title )
+////                intent.putExtra("body", notification.body )
+////                startActivity(intent)
+////
+////            } else { // 백그라운드
+////                sendNotification(remoteMessage.notification?.title) // 백그라운드인 경우 notification 이유는 모르겠지만 MainActivity로만 이동됨
+////            }
+//        }
+        // Check if message contains a data payload.
 //        if (remoteMessage.data.isNotEmpty()) {
 //            Log.d(TAG, "Message data payload: ${remoteMessage.data}")
-//
 //            if (/* Check if data needs to be processed by long running job */ true) {
 //                // For long-running tasks (10 seconds or more) use WorkManager.
 //                scheduleJob()
@@ -40,25 +66,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 //                handleNow()
 //            }
 //        }
-
-
-        // Check if message contains a notification payload.
-        remoteMessage.notification?.let { notification ->
-            Log.d(TAG, "Message Notification Body: ${notification.body}")
-
-            if (isAppRunning(this)) { //포그라운드
-                val intent = Intent(
-                    this,
-                    SecondActivity::class.java
-                ) // 전송될 Activity 지정 왜인지 백그라운드에선 Main으로만 감
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // 이거여야지만 이동됨.. 이유는모름
-                intent.putExtra("title", notification.title )
-                intent.putExtra("body", notification.body )
-                startActivity(intent)
-            } else { // 백그라운드
-                sendNotification(remoteMessage.notification?.title) // 백그라운드인 경우 notification 이유는 모르겠지만 MainActivity로만 이동됨
-            }
-        }
 
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
@@ -100,34 +107,53 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "sendRegistrationTokenToServer($token)")
     }
 
-    private fun sendNotification(messageBody: String?) {
+    private fun sendNotification() {
+
 
 
         Log.d(TAG, "sendNotification")
 
-        if (messageBody == null) return
+//        if (messageBody == null) return
+        val requestID = System.currentTimeMillis().toInt()
 
         val intent =
             Intent(this, SecondActivity::class.java) // 전송될 Activity 지정 왜인지 백그라운드에선 Main으로만 감
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0 /* Request code */, intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+//        intent.putExtra("title", messageBody )
+//        intent.putExtra("body", messageBody )
+
+        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getActivity(
+                this,
+                requestID,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+        } else {
+                PendingIntent.getActivity(this, requestID, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
 
 
         val channelId = "fcm_default_channel"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("FCM Message")
-            .setContentText(messageBody)
-            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setContentTitle("FCM Message 테스트")
+            .setContentText("테스트")
             .setAutoCancel(true)
             .setSound(defaultSoundUri)
-            .setContentIntent(pendingIntent)
+//            .setContentIntent(pendingIntent)
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .addAction(R.drawable.ic_launcher_background, "확인", pendingIntent)
+            .addAction(R.drawable.ic_launcher_background, "취소", getCancelPendingIntent())
+
 
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+
+        val pendingIntent2 =
+            PendingIntent.getActivity(this, requestID, Intent(), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
 
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -139,10 +165,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
+        val notification = notificationBuilder.build()
+
         Log.d(TAG, "sendNotification start")
+
         notificationManager.notify(
             5555 /* ID of notification */,
-            notificationBuilder.build()
+            notification
         ) // notification
 
 
@@ -171,4 +200,37 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             return Result.success()
         }
     }
+
+
+    private fun getCancelPendingIntent(): PendingIntent? {
+
+        val broadcastIntentCancel = Intent(this, NotiActionService::class.java)
+        broadcastIntentCancel.action = "CANCEL_ACTION"
+        val pendingIntentCancel =if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.getForegroundService(
+                    this,
+                    1,
+                    broadcastIntentCancel,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                )
+            } else {
+                PendingIntent.getForegroundService(
+                    this,
+                    1,
+                    broadcastIntentCancel,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            }
+        } else {
+            PendingIntent.getService(
+                this,
+                1,
+                broadcastIntentCancel,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
+        return pendingIntentCancel
+    }
+
 }

@@ -4,7 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <application
         android:name=".FcmSampleApplication"
@@ -17,25 +18,40 @@
         android:theme="@style/Theme.FCMSample"
         tools:targetApi="31">
         <activity
-            android:name=".ui.activity.SecondActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.activity.MainActivity"
-            android:exported="true">
+            android:name=".ui.activity.SplashActivity"
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.activity.SecondActivity"
+            android:exported="false" >
+        </activity>
+        <activity
+            android:name=".ui.activity.MainActivity"
+            android:exported="false"/>
 
         <service
             android:name=".fcm.MyFirebaseMessagingService"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".fcm.NotiActionService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="YES_ACTION" />
+                <action android:name="CANCEL_ACTION" />
+            </intent-filter>
+        </service>
+
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
