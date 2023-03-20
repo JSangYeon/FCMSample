@@ -33,17 +33,6 @@ class NotificationActionService : Service() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun checkAction() {
-//        val moveSecondActivityIntent = Intent(this, SecondActivity::class.java)
-//        moveSecondActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//
-//        val pendingIntent = PendingIntent.getActivity(
-//            this, 0 /* Request code */, moveSecondActivityIntent,
-//            PendingIntent.FLAG_IMMUTABLE
-//        )
-//
-////        startForegroundService(moveSecondActivityIntent)
-//
-//        pendingIntent.
 
     }
 

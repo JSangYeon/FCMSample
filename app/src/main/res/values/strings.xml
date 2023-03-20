@@ -7,6 +7,10 @@
     <string name="action_check">ACTION_CHECK</string>
     <string name="action_cancel">ACTION_CANCEL</string>
 
+    <string name="id">id</string>
+    <string name="missed_requests">missedRequests</string>
+    <string name="add_any_data_here">addAnyDataHere</string>
+
     <string name="app_permission_not_allowed_title">앱 필수 권한 거부</string>
     <string name="app_permission_not_allowed_content">앱에 필요한 권한을 허용하지 않아 앱을 종료합니다.\n권한 허용 후 앱을 다시 실행해주세요.</string>
 

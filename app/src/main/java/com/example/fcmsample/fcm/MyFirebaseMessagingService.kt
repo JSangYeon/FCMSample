@@ -25,13 +25,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     lateinit var notificationManager : NotificationManager
 
-    // [START receive_message]
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         // TODO(developer): Handle FCM messages here.
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
-        Log.d(TAG, "From: ${remoteMessage.from}")
+        Log.d(TAG, "From: ${remoteMessage.data["id"]}")
 
-        sendNotification() // 백그라운드인 경우 notification 이유는 모르겠지만 MainActivity로만 이동됨
+        sendNotification(remoteMessage.data) // 백그라운드인 경우 notification 이유는 모르겠지만 MainActivity로만 이동됨
         // Check if message contains a notification payload.
 //        remoteMessage.data.let { data ->
 //
@@ -65,12 +64,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 //            }
 //        }
 
-        // Also if you intend on generating your own notifications as a result of a received FCM
-        // message, here is where that should be initiated. See sendNotification method below.
     }
-    // [END receive_message]
 
-    // [START on_new_token]
     /**
      * Called if the FCM registration token is updated. This may occur if the security of
      * the previous token had been compromised. Note that this is called when the
@@ -105,11 +100,16 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "sendRegistrationTokenToServer($token)")
     }
 
-    private fun sendNotification() {
+    private fun sendNotification(map : Map<String,String>) {
 
-
+        val id = getString(R.string.id)
+        val missedRequests = getString(R.string.missed_requests)
+        val addAnyDataHere = getString(R.string.add_any_data_here)
 
         Log.d(TAG, "sendNotification")
+        Log.d(TAG, "$id : ${map[id]}")
+        Log.d(TAG, "$missedRequests : ${map[missedRequests]}")
+        Log.d(TAG, "$addAnyDataHere : ${map[addAnyDataHere]}")
 
 //        if (messageBody == null) return
         val requestID = System.currentTimeMillis().toInt()
@@ -118,13 +118,25 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             Intent(this, SecondActivity::class.java) // 전송될 Activity 지정 왜인지 백그라운드에선 Main으로만 감
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-//        intent.putExtra("title", messageBody )
-//        intent.putExtra("body", messageBody )
+        intent.putExtra(id, map[id])
+        intent.putExtra(missedRequests, map[missedRequests])
+        intent.putExtra(addAnyDataHere, map[addAnyDataHere])
 
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0 /* Request code */, intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getActivity(
+                this,
+                1,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE // 해당 플래그 IMMUTABLE 넣으면 데이터 전송 안됨
+            )
+        } else {
+            PendingIntent.getActivity(
+                this,
+                1,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
 
         val channelId = "fcm_default_channel"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -135,8 +147,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
             .setSmallIcon(R.drawable.ic_launcher_background)
-            .addAction(com.google.android.material.R.drawable.ic_mtrl_checked_circle, "확인", getCheckPendingIntent())
-            .addAction(com.google.android.material.R.drawable.ic_mtrl_chip_close_circle, "취소", getCancelPendingIntent())
+            .addAction(com.google.android.material.R.drawable.ic_mtrl_checked_circle, getString(R.string.check), getCheckPendingIntent())
+            .addAction(com.google.android.material.R.drawable.ic_mtrl_chip_close_circle, getString(R.string.cancel), getCancelPendingIntent())
 
 
         val notificationManager =
